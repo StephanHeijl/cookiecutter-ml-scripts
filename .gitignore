@@ -1,0 +1,5 @@
+.venv
+mlruns
+lightning_logs
+
+image_tasks/flowers_102
