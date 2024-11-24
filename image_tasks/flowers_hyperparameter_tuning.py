@@ -34,6 +34,11 @@ def objective(trial):
     return val_loss
 
 if __name__ == "__main__":
+    # To parallelize the optimization, use `optuna create-study --storage sqlite:///example.db` 
+    # https://optuna.readthedocs.io/en/stable/tutorial/10_key_features/004_distributed.html
+
+    # Use a bash script to launch multiple instances of this script, with different CUDA_VISIBLE_DEVICES
+
     # Create a study
     study = optuna.create_study(direction="minimize")
 
