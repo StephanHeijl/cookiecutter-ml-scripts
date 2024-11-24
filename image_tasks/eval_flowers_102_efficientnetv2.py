@@ -8,26 +8,30 @@ import numpy as np
 from sklearn.metrics import classification_report, confusion_matrix
 
 # Device configuration
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Preprocessing parameters
 IMG_SIZE = 224
 BATCH_SIZE = 32
 
 # Preprocessing transforms
-transform = transforms.Compose([
-    transforms.Resize((IMG_SIZE, IMG_SIZE)),
-    transforms.ToTensor(),
-    transforms.Normalize([0.485, 0.456, 0.406],   # mean for ImageNet
-                         [0.229, 0.224, 0.225])   # std for ImageNet
-])
+transform = transforms.Compose(
+    [
+        transforms.Resize((IMG_SIZE, IMG_SIZE)),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            [0.485, 0.456, 0.406],  # mean for ImageNet
+            [0.229, 0.224, 0.225],
+        ),  # std for ImageNet
+    ]
+)
 
 # Load the Flowers-102 dataset
-test_set = Flowers102(root='.', split='test', download=True, transform=transform)
+test_set = Flowers102(root=".", split="test", download=True, transform=transform)
 test_loader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False)
 
 # Load the EfficientNetV2 model
-model = timm.create_model('tf_efficientnetv2_b0', pretrained=True)
+model = timm.create_model("tf_efficientnetv2_b0", pretrained=True)
 model.eval()
 model.to(device)
 
@@ -48,18 +52,18 @@ with torch.no_grad():
     for images, labels in test_loader:
         images = images.to(device)
         labels = labels.to(device)
-        
+
         outputs = model(images)
         _, predicted = torch.max(outputs.data, 1)
-        
+
         y_pred.extend(predicted.cpu().numpy())
         y_true.extend(labels.cpu().numpy())
 
 # Classification report
-print('Classification Report')
+print("Classification Report")
 print(classification_report(y_true, y_pred, digits=4))
 
 # Confusion matrix
-print('Confusion Matrix')
+print("Confusion Matrix")
 cm = confusion_matrix(y_true, y_pred)
 print(cm)
