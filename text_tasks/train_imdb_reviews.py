@@ -80,6 +80,8 @@ class IMDBClassifier(pl.LightningModule):
         outputs = self.model(**tokenized)
         loss = self.criterion(outputs.logits, labels)
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+        accuracy = (torch.argmax(outputs.logits, dim=1) == labels).float().mean()
+        self.log("train_acc", accuracy, on_step=True, on_epoch=True, prog_bar=True)
         return loss
 
     def validation_step(self, batch, batch_idx):

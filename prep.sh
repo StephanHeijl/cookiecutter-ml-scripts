@@ -8,5 +8,11 @@ source ~/miniconda3/bin/activate
 pip install uv
 
 # Add SSH key to Github
+# Clone the cookiecutter repo
 
-git@github.com:StephanHeijl/cookiecutter-ml-scripts.git
+git clone git@github.com:StephanHeijl/cookiecutter-ml-scripts.git
+
+cd cookiecutter-ml-scripts
+uv pip install -r pyproject.toml
+
+python3 test_cuda.py
