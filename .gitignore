@@ -2,4 +2,8 @@
 mlruns
 lightning_logs
 
-image_tasks/flowers_102
+*/flowers-102
+*/__pycache__
+*/.ipynb_checkpoints
+*/.pytest_cache
+*/.vscode

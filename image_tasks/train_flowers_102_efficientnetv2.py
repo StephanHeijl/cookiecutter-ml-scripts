@@ -63,6 +63,7 @@ class FlowerClassifierSettings:
     max_epochs: int = 5
     patience: int = 5
     model_name: str = "efficientnet_b1.ra4_e3600_r240_in1k"
+    run_on_test_set: bool = False
 
 
 # Define the Lightning Module
@@ -119,6 +120,26 @@ class FlowerClassifier(pl.LightningModule):
         )
 
 
+def run_model_on_test_set(model):
+    # Evaluate on the test set
+    model.eval()
+    y_pred = []
+    y_true = []
+
+    with torch.no_grad():
+        for images, labels in tqdm(test_loader):
+            images = images.to(model.device)
+            labels = labels.to(model.device)
+
+            outputs = model(images)
+            _, predicted = torch.max(outputs.data, 1)
+
+            y_pred.extend(predicted.cpu().numpy())
+            y_true.extend(labels.cpu().numpy())
+
+    return y_true, y_pred
+
+
 def main(settings=None):
     # Instantiate the model
     if settings is None:
@@ -152,7 +173,7 @@ def main(settings=None):
     # Define the Trainer
     trainer = Trainer(
         max_epochs=settings.max_epochs,
-        devices=1,
+        devices=os.environ.get("CUDA_VISIBLE_DEVICES", "0").split(","),
         callbacks=[early_stop],
         logger=mlflow_logger,
         log_every_n_steps=1,
@@ -163,49 +184,41 @@ def main(settings=None):
     # Train the model
     trainer.fit(model, train_loader, val_loader)
 
-    # Evaluate on the test set
-    model.eval()
-    y_pred = []
-    y_true = []
+    if settings.run_on_test_set:
+        y_true, y_pred = run_model_on_test_set(model)
 
-    with torch.no_grad():
-        for images, labels in tqdm(test_loader):
-            images = images.to(model.device)
-            labels = labels.to(model.device)
+        # Classification report
+        print("Classification Report")
+        print(classification_report(y_true, y_pred, digits=4))
 
-            outputs = model(images)
-            _, predicted = torch.max(outputs.data, 1)
+        # Confusion matrix
+        print("Confusion Matrix")
+        cm = confusion_matrix(y_true, y_pred)
+        print(cm)
 
-            y_pred.extend(predicted.cpu().numpy())
-            y_true.extend(labels.cpu().numpy())
+        # Log classification report to MLFlow
+        mlflow_logger._mlflow_client.log_text(
+            text=classification_report(y_true, y_pred, digits=4),
+            artifact_file="classification_report.txt",
+            run_id=mlflow_logger.run_id,
+        )
 
-            if len(y_pred) > 100:
-                break
+        # Log test metrics to MLFlow
+        mlflow_logger.log_metrics(
+            {
+                "test_accuracy": accuracy_score(y_true, y_pred),
+                "test_matthews_corrcoef": matthews_corrcoef(y_true, y_pred),
+                "test_loss": model.criterion(outputs, labels).item(),
+            }
+        )
 
-    # Classification report
-    print("Classification Report")
-    print(classification_report(y_true, y_pred, digits=4))
-
-    # Confusion matrix
-    print("Confusion Matrix")
-    cm = confusion_matrix(y_true, y_pred)
-    print(cm)
-
-    # Log classification report to MLFlow
-    mlflow_logger._mlflow_client.log_text(
-        text=classification_report(y_true, y_pred, digits=4),
-        artifact_file="classification_report.txt",
-        run_id=mlflow_logger.run_id,
-    )
-
-    # Log test metrics to MLFlow
-    mlflow_logger.log_metrics(
-        {
+        return {
             "test_accuracy": accuracy_score(y_true, y_pred),
             "test_matthews_corrcoef": matthews_corrcoef(y_true, y_pred),
-            "test_loss": model.criterion(outputs, labels).item(),
+            "val_loss": early_stop.best_score,
         }
-    )
+    else:
+        return early_stop.best_score  # Validation loss
 
 
 if __name__ == "__main__":
