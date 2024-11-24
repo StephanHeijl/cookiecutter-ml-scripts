@@ -265,6 +265,7 @@ dependencies = [
     { name = "timm" },
     { name = "torch" },
     { name = "torchvision" },
+    { name = "transformers" },
 ]
 
 [package.metadata]
@@ -278,6 +279,7 @@ requires-dist = [
     { name = "timm", specifier = ">=1.0.11" },
     { name = "torch", specifier = ">=2.5.1" },
     { name = "torchvision", specifier = ">=0.20.1" },
+    { name = "transformers", specifier = ">=4.46.3" },
 ]
 
 [[package]]

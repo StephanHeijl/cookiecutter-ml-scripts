@@ -173,7 +173,7 @@ def main(settings=None):
     # Define the Trainer
     trainer = Trainer(
         max_epochs=settings.max_epochs,
-        devices=os.environ.get("CUDA_VISIBLE_DEVICES", "0").split(","),
+        devices=len(os.environ.get("CUDA_VISIBLE_DEVICES", "0").split(",")),
         callbacks=[early_stop],
         logger=mlflow_logger,
         log_every_n_steps=1,

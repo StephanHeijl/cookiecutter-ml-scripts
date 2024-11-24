@@ -12,4 +12,5 @@ dependencies = [
   "timm>=1.0.11",
   "torch>=2.5.1",
   "torchvision>=0.20.1",
+  "transformers>=4.46.3",
 ]
